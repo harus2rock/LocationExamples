@@ -60,6 +60,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private PolylineOptions polylineOptions;
     private int polylineWidth = 30;
 
+    boolean zoomable = true;
+    Timer zoomBlockingTimer;
+    boolean didInitialZoom;
+    private Handler handlerOnUIThread;
+
     private BroadcastReceiver locationUpdateReceiver;
 
     @Override
@@ -103,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (locationService.isLogging) {
                     addPolyline();
                 }
-//                zoomMapTo(newLocation);
+                zoomMapTo(newLocation);
             }
         };
 
@@ -126,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, 14));
 
         // my settings
-        mMap.getUiSettings().setAllGesturesEnabled(false);
+        mMap.getUiSettings().setZoomControlsEnabled(false);
         mMap.setMyLocationEnabled(false);
         mMap.getUiSettings().setCompassEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
@@ -135,6 +140,32 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
             @Override
             public void onCameraMoveStarted(int reason) {
+                if(reason == GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE){
+                    Log.d(TAG, "onCameraMoveStarted after user's zoom action");
+
+                    zoomable = false;
+                    if (zoomBlockingTimer != null) {
+                        zoomBlockingTimer.cancel();
+                    }
+
+                    handlerOnUIThread = new Handler();
+
+                    TimerTask task = new TimerTask() {
+                        @Override
+                        public void run() {
+                            handlerOnUIThread.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    zoomBlockingTimer = null;
+                                    zoomable = true;
+                                }
+                            });
+                        }
+                    };
+                    zoomBlockingTimer = new Timer();
+                    zoomBlockingTimer.schedule(task, 10 * 1000);
+                    Log.d(TAG, "start blocking auto zoom for 10 seconds");
+                }
             }
         });
     }
@@ -160,9 +191,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     };
 
+    private void zoomMapTo(Location location) {
+        latlng = new LatLng(location.getLatitude(), location.getLongitude());
+
+        if (this.didInitialZoom == false) {
+            try {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, 17.5f));
+                this.didInitialZoom = true;
+                return;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (zoomable) {
+            try {
+                zoomable = false;
+                mMap.animateCamera(CameraUpdateFactory.newLatLng(latlng),
+                        new GoogleMap.CancelableCallback() {
+                            @Override
+                            public void onFinish() {
+                                zoomable = true;
+                            }
+
+                            @Override
+                            public void onCancel() {
+                                zoomable = true;
+                            }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private void drawUserPositionMarker(Location location){
         latlng = new LatLng(location.getLatitude(), location.getLongitude());
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, 17));
+//        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, 17));
 
         if(this.userPositionMarkerBitmapDescriptor == null) {
             userPositionMarkerBitmapDescriptor = BitmapDescriptorFactory.fromResource(R.drawable.point_red);
