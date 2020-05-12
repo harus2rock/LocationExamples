@@ -17,6 +17,9 @@ import android.util.Log;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import java.util.ArrayList;
 
 import static android.content.ContentValues.TAG;
 import static android.location.GpsStatus.*;
@@ -27,12 +30,17 @@ public class LocationService extends Service implements LocationListener, Listen
     private final LocationServiceBinder binder = new LocationServiceBinder();
     boolean isLocationManagerUpdatingLocation;
 
+    ArrayList<Location> locationList;
+    boolean isLogging;
+
     public LocationService() {
     }
 
     @Override
     public void onCreate() {
         isLocationManagerUpdatingLocation = false;
+        locationList = new ArrayList<>();
+        isLogging = false;
     }
 
     @Override
@@ -95,6 +103,15 @@ public class LocationService extends Service implements LocationListener, Listen
     @Override
     public void onLocationChanged(Location newLocation) {
         Log.d(TAG, "(" + newLocation.getLatitude() + "," + newLocation.getLongitude() + ")");
+
+        if(isLogging){
+            locationList.add(newLocation);
+        }
+
+        Intent intent = new Intent("LocationUpdated");
+        intent.putExtra("location", newLocation);
+
+        LocalBroadcastManager.getInstance(this.getApplication()).sendBroadcast(intent);
     }
 
     @Override

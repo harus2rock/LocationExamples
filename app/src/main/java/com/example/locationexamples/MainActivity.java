@@ -4,14 +4,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.Manifest;
 import android.app.FragmentTransaction;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -23,7 +27,12 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -36,6 +45,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private GoogleMap mMap;
     private LatLng latlng;
+
+    private Marker userPositionMarker;
+    private BitmapDescriptor userPositionMarkerBitmapDescriptor;
+
+    private BroadcastReceiver locationUpdateReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +79,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment =
                (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        // Get present location
+        locationUpdateReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Location newLocation = intent.getParcelableExtra("location");
+
+//                drawLocationAccuracyCircle(newLocation);
+                drawUserPositionMarker(newLocation);
+
+//                if (locationService.isLogging) {
+//                    addPolyline();
+//                }
+//                zoomMapTo(newLocation);
+            }
+        };
+
+        // TODO: Does it need?
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                locationUpdateReceiver,
+                new IntentFilter("LocationUpdated"));
+
+
     }
 
     @Override
@@ -113,4 +150,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     };
 
+    private void drawUserPositionMarker(Location location){
+        latlng = new LatLng(location.getLatitude(), location.getLongitude());
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, 17));
+
+        if(this.userPositionMarkerBitmapDescriptor == null) {
+            userPositionMarkerBitmapDescriptor = BitmapDescriptorFactory.fromResource(R.drawable.point_red);
+        }
+
+        if(userPositionMarker == null) {
+            userPositionMarker = mMap.addMarker(new MarkerOptions()
+                    .position(latlng)
+                    .flat(true)
+                    .anchor(0.5f, 0.5f)
+                    .icon(this.userPositionMarkerBitmapDescriptor));
+        } else {
+            userPositionMarker.setPosition(latlng);
+        }
+    }
 }
