@@ -40,7 +40,7 @@ public class LocationService extends Service implements LocationListener, Listen
     public void onCreate() {
         isLocationManagerUpdatingLocation = false;
         locationList = new ArrayList<>();
-        isLogging = false;
+        isLogging = true;
     }
 
     @Override

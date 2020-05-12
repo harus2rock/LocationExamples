@@ -36,7 +36,11 @@ import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -52,6 +56,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Marker userPositionMarker;
     private Circle locationAccuracyCircle;
     private BitmapDescriptor userPositionMarkerBitmapDescriptor;
+    private Polyline runningPathPolyline;
+    private PolylineOptions polylineOptions;
+    private int polylineWidth = 30;
 
     private BroadcastReceiver locationUpdateReceiver;
 
@@ -93,9 +100,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 drawLocationAccuracyCircle(newLocation);
                 drawUserPositionMarker(newLocation);
 
-//                if (locationService.isLogging) {
-//                    addPolyline();
-//                }
+                if (locationService.isLogging) {
+                    addPolyline();
+                }
 //                zoomMapTo(newLocation);
             }
         };
@@ -184,6 +191,38 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .radius(location.getAccuracy()));
         } else {
             this.locationAccuracyCircle.setCenter(latlng);
+        }
+    }
+
+    private void addPolyline() {
+        ArrayList<Location> locationList = locationService.locationList;
+
+        if (locationList.size() == 2) {
+            Location fromLocation = locationList.get(0);
+            Location toLocation = locationList.get(1);
+
+            LatLng from = new LatLng(((fromLocation.getLatitude())),
+                    ((fromLocation.getLongitude())));
+            LatLng to = new LatLng(((toLocation.getLatitude())),
+                    ((toLocation.getLongitude())));
+            this.runningPathPolyline = mMap.addPolyline(new PolylineOptions()
+                    .add(from, to).width(polylineWidth)
+                    .color(Color.parseColor("#801B60FE")).geodesic(true));
+        } else if (locationList.size() > 2) {
+            Location toLocation = locationList.get(locationList.size() - 1);
+            LatLng to = new LatLng(((toLocation.getLatitude())),
+                    ((toLocation.getLongitude())));
+
+            List<LatLng> points = runningPathPolyline.getPoints();
+            points.add(to);
+
+            runningPathPolyline.setPoints(points);
+        }
+    }
+
+    private void clearPolyline() {
+        if (runningPathPolyline != null) {
+            runningPathPolyline.remove();
         }
     }
 }
