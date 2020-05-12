@@ -15,6 +15,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
@@ -29,6 +30,8 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -47,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LatLng latlng;
 
     private Marker userPositionMarker;
+    private Circle locationAccuracyCircle;
     private BitmapDescriptor userPositionMarkerBitmapDescriptor;
 
     private BroadcastReceiver locationUpdateReceiver;
@@ -86,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onReceive(Context context, Intent intent) {
                 Location newLocation = intent.getParcelableExtra("location");
 
-//                drawLocationAccuracyCircle(newLocation);
+                drawLocationAccuracyCircle(newLocation);
                 drawUserPositionMarker(newLocation);
 
 //                if (locationService.isLogging) {
@@ -96,7 +100,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         };
 
-        // TODO: Does it need?
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 locationUpdateReceiver,
                 new IntentFilter("LocationUpdated"));
@@ -166,6 +169,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .icon(this.userPositionMarkerBitmapDescriptor));
         } else {
             userPositionMarker.setPosition(latlng);
+        }
+    }
+
+    private void drawLocationAccuracyCircle(Location location) {
+        latlng = new LatLng(location.getLatitude(), location.getLongitude());
+
+        if (this.locationAccuracyCircle == null) {
+            this.locationAccuracyCircle = mMap.addCircle(new CircleOptions()
+                    .center(latlng)
+                    .fillColor(Color.argb(64, 0, 0, 0))
+                    .strokeColor(Color.argb(64, 0, 0, 0))
+                    .strokeWidth(0.0f)
+                    .radius(location.getAccuracy()));
+        } else {
+            this.locationAccuracyCircle.setCenter(latlng);
         }
     }
 }
