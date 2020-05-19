@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">LocationExamples</string>
+    <string name="stop_button">stop_button</string>
+    <string name="start_button">start_button</string>
 </resources>
