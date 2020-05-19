@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private PolylineOptions polylineOptions;
     private int polylineWidth = 20;
 
-    boolean zoomable = false;
+    boolean zoomable = true;
     Timer zoomBlockingTimer;
     boolean didInitialZoom;
     private Handler handlerOnUIThread;

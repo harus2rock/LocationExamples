@@ -209,9 +209,9 @@ public class LocationService extends Service implements LocationListener, Listen
 
     public void stopLogging() {
 //        TODO: saveLog
-//        if (locationList.size() > 1){
-//            saveLog();
-//        }
+        if (locationList.size() > 1){
+            saveLog();
+        }
         isLogging = false;
     }
 
@@ -226,8 +226,43 @@ public class LocationService extends Service implements LocationListener, Listen
         FileWriter fileWriter = null;
         try {
             fileWriter = new FileWriter(filePath, false);
-            String record = "\n";
+            String record = "Latitude,Longitude,Accuracy,Elapsed(sec)\n";
+            Log.d(TAG, record);
             fileWriter.append(record);
+
+            if(Build.VERSION.SDK_INT >= 17){
+                long startTime = locationList.get(0).getElapsedRealtimeNanos();
+
+                for (Location location : locationList){
+                    long time = location.getElapsedRealtimeNanos() - startTime;
+                    record = "" + location.getLatitude() + "," + location.getLongitude()
+                            + "," + location.getAccuracy() + "," + (time/1000000000) + "\n";
+                    Log.d(TAG, record);
+                    fileWriter.append(record);
+                }
+
+            } else {
+                long startTime = locationList.get(0).getTime();
+
+                for (Location location : locationList){
+                    long time = location.getTime() - startTime;
+                    record = "" + location.getLatitude() + "," + location.getLongitude()
+                            + "," + location.getAccuracy() + "," + (time/1000) + "\n";
+                    Log.d(TAG, record);
+                    fileWriter.append(record);
+
+                }
+            }
+//            long startTime = locationList.get(0).getTime();
+//            for (Location location : locationList){
+//                if(Build.VERSION.SDK_INT >= 17){
+//                    record = "" + location.getLatitude() + "," + location.getLongitude() + "," + location.getAccuracy() + "," + (location.getElapsedRealtimeNanos()/1000) + "\n";
+//                }else{
+//                    record = "" + location.getLatitude() + "," + location.getLongitude() + "," + location.getAccuracy() + "," + (location.getTime()*1000) + "\n";
+//                }
+//                Log.d(TAG, record);
+//                fileWriter.append(record);
+//            }
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
