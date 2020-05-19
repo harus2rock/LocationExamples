@@ -21,6 +21,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.View;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -60,12 +62,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private PolylineOptions polylineOptions;
     private int polylineWidth = 30;
 
-    boolean zoomable = true;
+    boolean zoomable = false;
     Timer zoomBlockingTimer;
     boolean didInitialZoom;
     private Handler handlerOnUIThread;
 
     private BroadcastReceiver locationUpdateReceiver;
+
+    private ImageButton startButton;
+    private ImageButton stopButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,7 +121,30 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 locationUpdateReceiver,
                 new IntentFilter("LocationUpdated"));
 
+        startButton = (ImageButton) this.findViewById(R.id.start_button);
+        stopButton = (ImageButton) this.findViewById(R.id.stop_button);
+        stopButton.setVisibility(View.INVISIBLE);
 
+        startButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startButton.setVisibility(View.INVISIBLE);
+                stopButton.setVisibility(View.VISIBLE);
+
+                clearPolyline();
+                locationService.startLogging();
+            }
+        });
+
+        stopButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startButton.setVisibility(View.VISIBLE);
+                stopButton.setVisibility(View.INVISIBLE);
+
+                locationService.stopLogging();
+            }
+        });
     }
 
     @Override
@@ -158,13 +186,30 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 public void run() {
                                     zoomBlockingTimer = null;
                                     zoomable = true;
+                                    try {
+                                        zoomable = false;
+                                        mMap.animateCamera(CameraUpdateFactory.newLatLng(latlng),
+                                                new GoogleMap.CancelableCallback() {
+                                                    @Override
+                                                    public void onFinish() {
+                                                        zoomable = true;
+                                                    }
+
+                                                    @Override
+                                                    public void onCancel() {
+                                                        zoomable = true;
+                                                    }
+                                                });
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
                                 }
                             });
                         }
                     };
                     zoomBlockingTimer = new Timer();
-                    zoomBlockingTimer.schedule(task, 10 * 1000);
-                    Log.d(TAG, "start blocking auto zoom for 10 seconds");
+                    zoomBlockingTimer.schedule(task, 5 * 1000);
+                    Log.d(TAG, "start blocking auto zoom for 5 seconds");
                 }
             }
         });

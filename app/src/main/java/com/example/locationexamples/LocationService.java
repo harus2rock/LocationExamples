@@ -40,7 +40,7 @@ public class LocationService extends Service implements LocationListener, Listen
     public void onCreate() {
         isLocationManagerUpdatingLocation = false;
         locationList = new ArrayList<>();
-        isLogging = true;
+        isLogging = false;
     }
 
     @Override
@@ -141,6 +141,14 @@ public class LocationService extends Service implements LocationListener, Listen
 
     private void notifyLocationProviderStatusUpdated(boolean isLocationProviderAvailable) {
         // Broadcast location provider status change here
+    }
+
+    public void startLogging() {
+       isLogging = true;
+    }
+
+    public void stopLogging() {
+        isLogging = false;
     }
 
     public void startUpdatingLocation() {
