@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private BitmapDescriptor userPositionMarkerBitmapDescriptor;
     private Polyline runningPathPolyline;
     private PolylineOptions polylineOptions;
-    private int polylineWidth = 30;
+    private int polylineWidth = 20;
 
     boolean zoomable = false;
     Timer zoomBlockingTimer;
@@ -317,7 +317,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     ((toLocation.getLongitude())));
             this.runningPathPolyline = mMap.addPolyline(new PolylineOptions()
                     .add(from, to).width(polylineWidth)
-                    .color(Color.parseColor("#801B60FE")).geodesic(true));
+                    .color(Color.parseColor("#80FF7F50")).geodesic(true));
         } else if (locationList.size() > 2) {
             Location toLocation = locationList.get(locationList.size() - 1);
             LatLng to = new LatLng(((toLocation.getLatitude())),
