@@ -41,6 +41,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -71,6 +72,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private ImageButton startButton;
     private ImageButton stopButton;
+
+    ArrayList<Circle> malCircles = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,6 +115,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 if (locationService.isLogging) {
                     addPolyline();
+                    clearExtraPoints();
+                    addExtraPoints();
                 }
                 zoomMapTo(newLocation);
             }
@@ -132,6 +137,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 stopButton.setVisibility(View.VISIBLE);
 
                 clearPolyline();
+                clearExtraPoints();
                 locationService.startLogging();
             }
         });
@@ -330,9 +336,40 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    private void addExtraPoints() {
+        ArrayList<Location> oldLocationList = locationService.oldLocationList;
+        ArrayList<Location> noAccuracyLocationList = locationService.noAccuracyLocationList;
+        ArrayList<Location> inaccuracyLocationList = locationService.inaccurateLocationList;
+
+        drawExtraPoints(oldLocationList, "#80FFA500");
+        drawExtraPoints(noAccuracyLocationList, "#80FFD700");
+        drawExtraPoints(inaccuracyLocationList, "#80191970");
+    }
+
+    private void drawExtraPoints(ArrayList<Location> locationList, String colorString){
+        for (Location location: locationList){
+            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+
+            Circle circle = mMap.addCircle(new CircleOptions()
+                    .center(latLng)
+                    .radius(1)
+                    .fillColor(Color.parseColor(colorString))
+                    .strokeWidth(0));
+
+            malCircles.add(circle);
+        }
+    }
+
     private void clearPolyline() {
         if (runningPathPolyline != null) {
             runningPathPolyline.remove();
         }
+    }
+
+    private void clearExtraPoints() {
+        for (Circle circle : malCircles){
+            circle.remove();
+        }
+        malCircles = new ArrayList<>();
     }
 }
