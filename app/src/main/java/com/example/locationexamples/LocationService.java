@@ -22,6 +22,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -208,18 +209,40 @@ public class LocationService extends Service implements LocationListener, Listen
     }
 
     public void stopLogging() {
-//        TODO: saveLog
+//        TODO: Really? -> cancel, no, yes
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat dirNameDateTimeFormat = new SimpleDateFormat("yyyy/MM/dd");
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat fileNameDateTimeFormat = new SimpleDateFormat("HHmmss");
+
+        String dirPath = this.getExternalFilesDir(null).getAbsolutePath() + "/"
+                + dirNameDateTimeFormat.format((new Date()));
+        File newDir = new File(dirPath);
+        if(newDir.mkdirs()){
+            Log.d(TAG, "Make directory: " + dirPath);
+        } else {
+            Log.d(TAG, "Exist directory: " + dirPath);
+        }
+
+        String filePath = dirPath + "/"
+                + fileNameDateTimeFormat.format(new Date()) + "_";
+
         if (locationList.size() > 1){
-            saveLog();
+            saveLog(locationList, filePath + "locationList.csv");
+        }
+        if (oldLocationList.size() > 1){
+            saveLog(oldLocationList, filePath + "oldLocationList.csv");
+        }
+        if (noAccuracyLocationList.size() > 1){
+            saveLog(noAccuracyLocationList, filePath + "noAccuracyLocationList.csv");
+        }
+        if (inaccurateLocationList.size() > 1){
+            saveLog(inaccurateLocationList, filePath + "inaccurateLocationList.csv");
         }
         isLogging = false;
     }
 
 //  Data Logging
-    public synchronized void saveLog(){
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat fileNameDateTimeFormat = new SimpleDateFormat("yyyy_MMdd_HHmm");
-        String filePath = this.getExternalFilesDir(null).getAbsolutePath() + "/"
-                + fileNameDateTimeFormat.format(new Date()) + "log.csv";
+    public synchronized void saveLog(ArrayList<Location> arrayList, String filePath){
+
 
         Log.d(TAG, "saving to " + filePath);
 
@@ -231,9 +254,9 @@ public class LocationService extends Service implements LocationListener, Listen
             fileWriter.append(record);
 
             if(Build.VERSION.SDK_INT >= 17){
-                long startTime = locationList.get(0).getElapsedRealtimeNanos();
+                long startTime = arrayList.get(0).getElapsedRealtimeNanos();
 
-                for (Location location : locationList){
+                for (Location location : arrayList){
                     long time = location.getElapsedRealtimeNanos() - startTime;
                     record = "" + location.getLatitude() + "," + location.getLongitude()
                             + "," + location.getAccuracy() + "," + (time/1000000000) + "\n";
@@ -242,9 +265,9 @@ public class LocationService extends Service implements LocationListener, Listen
                 }
 
             } else {
-                long startTime = locationList.get(0).getTime();
+                long startTime = arrayList.get(0).getTime();
 
-                for (Location location : locationList){
+                for (Location location : arrayList){
                     long time = location.getTime() - startTime;
                     record = "" + location.getLatitude() + "," + location.getLongitude()
                             + "," + location.getAccuracy() + "," + (time/1000) + "\n";
