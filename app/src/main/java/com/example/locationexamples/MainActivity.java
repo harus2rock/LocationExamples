@@ -1,16 +1,22 @@
 package com.example.locationexamples;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -76,6 +82,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ImageButton startButton;
     private ImageButton stopButton;
 
+    private DialogFragment dialogFragment;
+    private FragmentManager dialogFragmentManager;
+
     ArrayList<Circle> malCircles = new ArrayList<>();
 
     @Override
@@ -129,6 +138,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 locationUpdateReceiver,
                 new IntentFilter("LocationUpdated"));
 
+        // Button and Chronometer
         chronometer = findViewById(R.id.chronometer);
 
         startButton = (ImageButton) this.findViewById(R.id.start_button);
@@ -144,6 +154,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 clearPolyline();
                 clearExtraPoints();
                 locationService.startLogging();
+
                 chronometer.setBase(SystemClock.elapsedRealtime());
                 chronometer.start();
             }
@@ -152,11 +163,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startButton.setVisibility(View.VISIBLE);
-                stopButton.setVisibility(View.INVISIBLE);
-
-                locationService.stopLogging();
-                chronometer.stop();
+                dialogFragmentManager = getSupportFragmentManager();
+                dialogFragment = new AlertDialogFragment();
+                dialogFragment.show(dialogFragmentManager, "save alert dialog");
             }
         });
     }
@@ -378,6 +387,47 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         for (Circle circle : malCircles){
             circle.remove();
         }
-        malCircles = new ArrayList<>();
+        malCircles.clear();
+    }
+
+    public void stopLogging(boolean saveLog){
+        startButton.setVisibility(View.VISIBLE);
+        stopButton.setVisibility(View.INVISIBLE);
+        locationService.stopLogging(saveLog);
+        chronometer.stop();
+    }
+
+    // DialogFragment
+    public static class AlertDialogFragment extends DialogFragment {
+        @Override
+        @NonNull
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            return new AlertDialog.Builder(getActivity())
+                    .setTitle("ログの保存")
+                    .setMessage("今回のログを保存しますか？")
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // Yew button pressed
+                            stop(true);
+                        }
+                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // No button pressed
+                            stop(false);
+                        }
+                    })
+                    .setNeutralButton("Cancel", null)
+                    .create();
+        }
+
+        private void stop(boolean saveLog){
+            MainActivity mainActivity = (MainActivity) getActivity();
+            if(mainActivity != null) {
+                mainActivity.stopLogging(saveLog);
+            }
+        }
     }
 }

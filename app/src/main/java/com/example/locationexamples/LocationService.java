@@ -208,36 +208,45 @@ public class LocationService extends Service implements LocationListener, Listen
        isLogging = true;
     }
 
-    public void stopLogging() {
-//        TODO: Really? -> cancel, no, yes
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat dirNameDateTimeFormat = new SimpleDateFormat("yyyy/MM/dd");
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat fileNameDateTimeFormat = new SimpleDateFormat("HHmmss");
-
-        String dirPath = this.getExternalFilesDir(null).getAbsolutePath() + "/"
-                + dirNameDateTimeFormat.format((new Date()));
-        File newDir = new File(dirPath);
-        if(newDir.mkdirs()){
-            Log.d(TAG, "Make directory: " + dirPath);
-        } else {
-            Log.d(TAG, "Exist directory: " + dirPath);
-        }
-
-        String filePath = dirPath + "/"
-                + fileNameDateTimeFormat.format(new Date()) + "_";
-
-        if (locationList.size() > 1){
-            saveLog(locationList, filePath + "locationList.csv");
-        }
-        if (oldLocationList.size() > 1){
-            saveLog(oldLocationList, filePath + "oldLocationList.csv");
-        }
-        if (noAccuracyLocationList.size() > 1){
-            saveLog(noAccuracyLocationList, filePath + "noAccuracyLocationList.csv");
-        }
-        if (inaccurateLocationList.size() > 1){
-            saveLog(inaccurateLocationList, filePath + "inaccurateLocationList.csv");
-        }
+    public void stopLogging(boolean saveLog) {
         isLogging = false;
+
+        locationList.clear();
+        oldLocationList.clear();
+        noAccuracyLocationList.clear();
+        inaccurateLocationList.clear();
+
+        if(saveLog) {
+            @SuppressLint("SimpleDateFormat") SimpleDateFormat dirNameDateTimeFormat = new SimpleDateFormat("yyyy/MM/dd");
+            @SuppressLint("SimpleDateFormat") SimpleDateFormat fileNameDateTimeFormat = new SimpleDateFormat("HHmmss");
+
+            // Make directory
+            String dirPath = this.getExternalFilesDir(null).getAbsolutePath() + "/"
+                    + dirNameDateTimeFormat.format((new Date()));
+            File newDir = new File(dirPath);
+            if (newDir.mkdirs()) {
+                Log.d(TAG, "Make directory: " + dirPath);
+            } else {
+                Log.d(TAG, "Exist directory: " + dirPath);
+            }
+
+            // Save each array list
+            String filePath = dirPath + "/"
+                    + fileNameDateTimeFormat.format(new Date()) + "_";
+
+            if (locationList.size() > 1) {
+                saveLog(locationList, filePath + "locationList.csv");
+            }
+            if (oldLocationList.size() > 1) {
+                saveLog(oldLocationList, filePath + "oldLocationList.csv");
+            }
+            if (noAccuracyLocationList.size() > 1) {
+                saveLog(noAccuracyLocationList, filePath + "noAccuracyLocationList.csv");
+            }
+            if (inaccurateLocationList.size() > 1) {
+                saveLog(inaccurateLocationList, filePath + "inaccurateLocationList.csv");
+            }
+        }
     }
 
 //  Data Logging
