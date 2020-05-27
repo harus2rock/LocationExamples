@@ -20,7 +20,7 @@
         android:id="@+id/chronometer"
         android:textSize="20sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/text_speed"
+        app:layout_constraintEnd_toStartOf="@id/speed"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintVertical_bias="0.05" />
@@ -28,7 +28,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/text_speed"
+        android:id="@+id/speed"
         android:text="@string/textView_speed"
         android:textSize="20sp"
         app:layout_constraintStart_toEndOf="@+id/chronometer"
@@ -43,7 +43,7 @@
         android:id="@+id/distance"
         android:text="@string/textView_dist"
         android:textSize="20sp"
-        app:layout_constraintStart_toEndOf="@+id/text_speed"
+        app:layout_constraintStart_toEndOf="@+id/speed"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"

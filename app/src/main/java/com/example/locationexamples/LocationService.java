@@ -205,7 +205,12 @@ public class LocationService extends Service implements LocationListener, Listen
     }
 
     public void startLogging() {
-       isLogging = true;
+        isLogging = true;
+
+        locationList.clear();
+        oldLocationList.clear();
+        noAccuracyLocationList.clear();
+        inaccurateLocationList.clear();
     }
 
     public void stopLogging(boolean saveLog) {

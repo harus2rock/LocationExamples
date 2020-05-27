@@ -10,6 +10,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.FragmentTransaction;
@@ -23,6 +24,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -31,6 +33,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Chronometer;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -48,6 +51,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+
+import org.w3c.dom.Text;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -79,6 +84,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private BroadcastReceiver locationUpdateReceiver;
 
     private Chronometer chronometer;
+    private TextView distanceText;
+    private TextView speedText;
     private ImageButton startButton;
     private ImageButton stopButton;
 
@@ -131,12 +138,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     addExtraPoints();
                 }
                 zoomMapTo(newLocation);
+
+                sumDistance();
+                calcSpeed();
             }
         };
 
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 locationUpdateReceiver,
                 new IntentFilter("LocationUpdated"));
+
+        // Get text views
+        distanceText = (TextView) findViewById(R.id.distance);
+        speedText = (TextView) findViewById(R.id.speed);
 
         // Button and Chronometer
         chronometer = findViewById(R.id.chronometer);
@@ -157,6 +171,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 chronometer.setBase(SystemClock.elapsedRealtime());
                 chronometer.start();
+
+                distanceText.setText(R.string.textView_dist);
+                speedText.setText(R.string.textView_speed);
             }
         });
 
@@ -388,6 +405,73 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             circle.remove();
         }
         malCircles.clear();
+    }
+
+    @SuppressLint("DefaultLocale")
+    private void sumDistance() {
+        if (locationService.locationList.size() > 1){
+            double meter = 0;
+            float[] results = new float[3];
+            int i = 1;
+
+            while (i<locationService.locationList.size()){
+                results[0] = 0;
+                Location from = locationService.locationList.get(i-1);
+                Location to = locationService.locationList.get(i);
+                Location.distanceBetween(from.getLatitude(), from.getLongitude(),
+                        to.getLatitude(), to.getLongitude(), results);
+                meter += results[0];
+                i++;
+            }
+
+            double kilometer = meter / 1000;
+            distanceText.setText(String.format("%.2f" + " (km)", kilometer));
+        }
+    }
+
+    @SuppressLint("DefaultLocale")
+    private void calcSpeed() {
+        int locationNum = locationService.locationList.size();
+        if(locationNum > 1){
+            // calculate time (sec)
+            int pointNum = Math.min(10, locationNum);
+            long sec = 0;
+
+            if(Build.VERSION.SDK_INT >= 17){
+                long fromTime = locationService.locationList
+                        .get(locationNum - pointNum).getElapsedRealtimeNanos();
+                long toTime = locationService.locationList
+                        .get(locationNum - 1).getElapsedRealtimeNanos();
+                sec = (toTime - fromTime) / 1000000000;
+                Log.d(TAG, fromTime + " " + toTime + " " + sec);
+            } else {
+                Log.d(TAG, "else");
+                long fromTime = locationService.locationList
+                        .get(locationNum - pointNum).getTime();
+                long toTime = locationService.locationList
+                        .get(locationNum - 1).getTime();
+                sec = (toTime - fromTime) / 1000;
+            }
+
+            // calculate distance (m)
+            int i = locationNum - pointNum + 1;
+            double meter = 0;
+            float [] results = new float[3];
+
+            while (i<locationNum){
+                results[0] = 0;
+                Location from = locationService.locationList.get(i-1);
+                Location to = locationService.locationList.get(i);
+                Location.distanceBetween(from.getLatitude(), from.getLongitude(),
+                        to.getLatitude(), to.getLongitude(), results);
+                meter += results[0];
+                i++;
+            }
+
+            // calculate speed (km/h) and set text
+            double speed = meter / 1000 / sec * 3600;
+            speedText.setText(String.format("%.2f" + " (km/h)", speed));
+        }
     }
 
     public void stopLogging(boolean saveLog){
