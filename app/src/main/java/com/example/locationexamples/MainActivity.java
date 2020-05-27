@@ -20,8 +20,10 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
+import android.widget.Chronometer;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -70,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private BroadcastReceiver locationUpdateReceiver;
 
+    private Chronometer chronometer;
     private ImageButton startButton;
     private ImageButton stopButton;
 
@@ -126,6 +129,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 locationUpdateReceiver,
                 new IntentFilter("LocationUpdated"));
 
+        chronometer = findViewById(R.id.chronometer);
+
         startButton = (ImageButton) this.findViewById(R.id.start_button);
         stopButton = (ImageButton) this.findViewById(R.id.stop_button);
         stopButton.setVisibility(View.INVISIBLE);
@@ -139,6 +144,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 clearPolyline();
                 clearExtraPoints();
                 locationService.startLogging();
+                chronometer.setBase(SystemClock.elapsedRealtime());
+                chronometer.start();
             }
         });
 
@@ -149,6 +156,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 stopButton.setVisibility(View.INVISIBLE);
 
                 locationService.stopLogging();
+                chronometer.stop();
             }
         });
     }

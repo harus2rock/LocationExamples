@@ -2,4 +2,6 @@
     <string name="app_name">LocationExamples</string>
     <string name="stop_button">stop_button</string>
     <string name="start_button">start_button</string>
+    <string name="textView_speed">0.00 (km/h)</string>
+    <string name="textView_dist">0.00 (km)</string>
 </resources>
