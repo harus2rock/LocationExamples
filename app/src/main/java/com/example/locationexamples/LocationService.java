@@ -216,10 +216,6 @@ public class LocationService extends Service implements LocationListener, Listen
     public void stopLogging(boolean saveLog) {
         isLogging = false;
 
-        locationList.clear();
-        oldLocationList.clear();
-        noAccuracyLocationList.clear();
-        inaccurateLocationList.clear();
 
         if(saveLog) {
             @SuppressLint("SimpleDateFormat") SimpleDateFormat dirNameDateTimeFormat = new SimpleDateFormat("yyyy/MM/dd");
@@ -252,6 +248,11 @@ public class LocationService extends Service implements LocationListener, Listen
                 saveLog(inaccurateLocationList, filePath + "inaccurateLocationList.csv");
             }
         }
+
+        locationList.clear();
+        oldLocationList.clear();
+        noAccuracyLocationList.clear();
+        inaccurateLocationList.clear();
     }
 
 //  Data Logging
